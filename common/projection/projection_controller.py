@@ -51,7 +51,7 @@ class ProjectionController:
             await self._mongo_operator.insert_one('ProjectionIdempotency_ProjectedEvent', {
                 'eventId': event.event_id,
                 'projectionName': projection_name
-            }, {'upsert': False})
+            })
 
             await projection_handler.project(event)
 
