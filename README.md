@@ -58,8 +58,6 @@ and deploy it to your cloud provider. We have provided infrastructure starter pa
 
 ## Support
 
-We have provided some documentation to help get you started with event sourcing in the `docs` folder in the root of this repo.
-
-If you get stuck, please feel free to ask questions in the #event-sourcing channel of our [Slack community](https://www.launchpass.com/ambar). We also offer a **free** 1 day Event Sourcing course discussing theory, patterns, infrastructure, and best practices. Register and learn more [here](https://ambar.cloud/event-sourcing-one-day-course).
+If you get stuck, please feel free to ask questions in the #event-sourcing channel of our [Slack community](https://www.launchpass.com/ambar). 
 Or if you need further help like a free private walkthrough, simply book one [here](https://calendly.com/luis-ambar).
 
