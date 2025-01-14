@@ -27,13 +27,16 @@ You can then open your browser to:
 
 ## How to Develop Your Own Application
 
-1. To use your own aggregates, events, commands, queries, projections, and reactions, you will need to change the code 
-in `domain/`.
-2. To register any services you add (controllers, repositories, etc.) you will need to change the container definition
-code in `container.py`.
-3. To register new routes, you will need to register your controllers in `app.py`.
-4. If you added new events, you need to update the `Serializer` and `Deserializer` classes in 
-`common/serialized_event/`.
+Assuming you know event sourcing theory, developing on this application will feel very natural. Otherwise, don't worry - Ambar offers a **free** 1 day Event Sourcing course [here](https://ambar.cloud/event-sourcing-one-day-course). 
+
+To get a quick understanding of how this application works, please read the domain code in `domain/`, the abstractions provided in `common/`, and the README files also in `common/`. With that reading done, here's a full picture:
+
+1. `domain/`: where you define aggregates, events, commands, queries, projections, and reactions. You will spend most of your time here.
+2. `common/`: a set of event sourcing abstractions. You will rarely need to edit files here, except for having to update the `Serializer` and `Deserializer` classes in `common/serialized_event/` whenever you add or remove events.
+3. `container.py`: contains a dependency injection container. You will need to edit this file to register or unregister services as you see fit (controllers, repositories, etc.). 
+4. `app.py`: contains the application's startup file. You will need to register routes, and their associated controllers here.
+
+When developing your application for the fist time, we recommend you keep the Cooking Club Membership code as an example you can quickly navigate to. Once you have implemented several commands, queries, projections, and reactions, delete the Cooking Club Membership code. This will require you to delete its code in `domain`, serialization logic in `common/serialized_event`, relevant services in `container.py`, and any routes in `app.py`.
 
 ## Additional Scripts
 
