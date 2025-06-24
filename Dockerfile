@@ -1,4 +1,5 @@
 FROM docker.io/python:3.11-slim
+COPY --from=ghcr.io/astral-sh/uv:0.7.14 /uv /uvx /bin/
 
 WORKDIR /app
 
@@ -7,9 +8,10 @@ RUN apt-get update && apt-get install -y \
     build-essential wget \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install gunicorn uvicorn
+COPY uv.lock ./
+COPY pyproject.toml ./
+RUN uv sync --locked --no-dev --compile-bytecode
+ENV PATH="/app/.venv/bin:$PATH"
 
 COPY . .
 

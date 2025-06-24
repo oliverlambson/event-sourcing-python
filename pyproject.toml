@@ -1,24 +1,21 @@
-[tool.poetry]
+[project]
 name = "event-sourcing-python"
 version = "1.0.0"
 description = "Event Sourcing in Python"
-
-[tool.poetry.dependencies]
-python = "^3.11"
-flask = "^3.0.0"
-flask-cors = "^4.0.0"
-pydantic = "^2.5.2"
-psycopg2-binary = "^2.9.9"
-pymongo = "^4.6.1"
-python-dotenv = "^1.0.0"
-dependency-injector = "^4.41.0"
-structlog = "^24.1.0"
-cryptography = "^41.0.7"
-gunicorn = "^21.2.0"
-uvicorn = "^0.25.0"
-pytz = "2024.1"
-
-
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+readme = "README.md"
+requires-python = ">=3.11,<4"
+dependencies = [
+  "flask>=3.0.0",
+  "flask-cors>=4.0.0",
+  "pydantic>=2.5.2",
+  "psycopg2-binary>=2.9.9",
+  "pymongo>=4.6.1",
+  "python-dotenv>=1.0.0",
+  "dependency-injector>=4.41.0",
+  "structlog>=24.1.0",
+  "cryptography>=41.0.7",
+  "gunicorn>=21.2.0",
+  "uvicorn>=0.25.0",
+  "pytz==2024.1",
+  "asgiref>=3.8.1",
+]
