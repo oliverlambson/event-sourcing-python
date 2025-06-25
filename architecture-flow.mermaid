@@ -1,0 +1,113 @@
+flowchart TB
+    %% Request Sources
+    Client["Client Application"]
+    Ambar["Ambar<br/>Data Streaming Service"]
+
+    %% Flask Application Subgraph
+    subgraph FlaskApp["Flask Application"]
+        Flask["Flask App<br/>API Gateway"]
+
+        %% Command Processing Subgraph
+        subgraph CommandProcessing["Command Processing"]
+            SAC["SubmitApplicationCommandController"]
+            CC["CommandController"]
+            SACH["SubmitApplicationCommandHandler"]
+            Event1[/"ApplicationSubmitted Event<br/>event_id, aggregate_id<br/>first_name, last_name<br/>favorite_cuisine<br/>years_of_professional_experience<br/>number_of_cooking_books_read"/]
+
+            SAC --> |"X-With-Session-Token required"| CC
+            CC --> |"Begin Transactions"| SACH
+            SACH --> |"Create Event"| Event1
+        end
+
+        %% Projection Processing Subgraph
+        subgraph ProjectionProcessing["Projection Processing"]
+            MBCPC["MembersByCuisineProjectionController"]
+            PC["ProjectionController"]
+            MBCPH["MembersByCuisineProjectionHandler"]
+            ProjectionDrop{{"Unknown events<br/>dropped (200 OK)"}}
+
+            MBCPC --> PC
+            PC --> |"Check idempotency"| MBCPH
+            PC --> |"Unknown event type"| ProjectionDrop
+        end
+
+        %% Reaction Processing Subgraph
+        subgraph ReactionProcessing["Reaction Processing"]
+            EARC["EvaluateApplicationReactionController"]
+            RC["ReactionController"]
+            EARH["EvaluateApplicationReactionHandler"]
+            ReactionDrop{{"Non-ApplicationSubmitted<br/>events dropped (200 OK)"}}
+            Decision{Business Logic:<br/>years_exp == 0 AND<br/>books_read > 0}
+            Event2A[/"ApplicationEvaluated<br/>status: APPROVED"/]
+            Event2R[/"ApplicationEvaluated<br/>status: REJECTED"/]
+
+            EARC --> RC
+            RC --> |"Begin Transactions"| EARH
+            EARH --> |"Not ApplicationSubmitted"| ReactionDrop
+            EARH --> Decision
+            Decision --> |"Yes"| Event2A
+            Decision --> |"No"| Event2R
+        end
+
+        %% Query Processing Subgraph
+        subgraph QueryProcessing["Query Processing"]
+            MBCQC["MembersByCuisineQueryController"]
+            QC["QueryController"]
+            MBCQH["MembersByCuisineQueryHandler"]
+            CuisineRepo["CuisineRepository"]
+
+            MBCQC --> QC
+            QC --> MBCQH
+            MBCQH --> |"find_all()"| CuisineRepo
+        end
+
+        %% Internal Flask routing
+        Flask --> |"request(command): submit application"| SAC
+        Flask --> |"ALL events<br/><br/>(ambar_auth)"| MBCPC
+        Flask --> |"ALL events<br/><br/>(ambar_auth)"| EARC
+        Flask --> |"request(query): members by cuisine"| MBCQC
+    end
+
+    %% Persistence Layer Subgraph
+    subgraph PersistenceLayer["Persistence Layer"]
+        PG[(PostgreSQL<br/>Event Store)]
+        MongoDB1[(MongoDB<br/>MembershipApplication<br/>Collection)]
+        MongoDB2[(MongoDB<br/>Cuisine<br/>Collection)]
+    end
+
+    %% External connections to Flask
+    Client --> |"POST /api/v1/cooking-club/membership/command/submit-application<br/>(command: submit application)"| Flask
+    Client --> |"POST /api/v1/cooking-club/membership/query/members-by-cuisine<br/>(query: members by cuisine)"| Flask
+    Ambar --> |"POST /api/v1/cooking-club/membership/projection/members-by-cuisine<br/>(ALL events)"| Flask
+    Ambar --> |"POST /api/v1/cooking-club/membership/reaction/evaluate-application<br/>(ALL events)"| Flask
+
+    %% Data flow connections
+    PG --> |"Pulls new events"| Ambar
+    Event1 --> |"save_event()"| PG
+    CC --> |"Commit Transactions"| PG
+    MBCPH --> |"handle ApplicationSubmitted"| MongoDB1
+    MBCPH --> |"handle ApplicationEvaluated<br/>(if APPROVED)"| MongoDB2
+    PC --> |"Commit MongoDB Transaction"| MongoDB1
+    PC --> |"Commit MongoDB Transaction"| MongoDB2
+    EARH --> |"Load Aggregate"| PG
+    Event2A --> |"save_event()"| PG
+    Event2R --> |"save_event()"| PG
+    RC --> |"Commit Transactions"| PG
+    CuisineRepo --> |"Read"| MongoDB2
+    QC --> |"Commit MongoDB Transaction"| MongoDB2
+
+    %% Styling
+    classDef event fill:#ffeb3b,stroke:#f57c00,stroke-width:2px
+    classDef storage fill:#4fc3f7,stroke:#0288d1,stroke-width:2px
+    classDef service fill:#81c784,stroke:#388e3c,stroke-width:2px
+    classDef controller fill:#ce93d8,stroke:#6a1b9a,stroke-width:2px
+    classDef external fill:#ffab91,stroke:#d84315,stroke-width:2px
+    classDef subgraphStyle fill:#f5f5f5,stroke:#333,stroke-width:2px
+    classDef dropped fill:#e0e0e0,stroke:#757575,stroke-width:2px,stroke-dasharray: 5 5
+
+    class Event1,Event2A,Event2R event
+    class PG,MongoDB1,MongoDB2 storage
+    class Flask service
+    class SAC,MBCPC,EARC,MBCQC,CC,PC,RC,QC,SACH,MBCPH,EARH,MBCQH controller
+    class Client,Ambar external
+    class ProjectionDrop,ReactionDrop dropped
