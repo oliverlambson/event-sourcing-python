@@ -1,8 +1,12 @@
 import os
 import base64
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from flask.wrappers import Request
 
 
-def get_auth_credentials():
+def get_auth_credentials() -> tuple[str, str]:
     valid_username = os.getenv('AMBAR_HTTP_USERNAME')
     valid_password = os.getenv('AMBAR_HTTP_PASSWORD')
 
@@ -12,7 +16,7 @@ def get_auth_credentials():
     return valid_username, valid_password
 
 
-def ambar_auth(request_obj):
+def ambar_auth(request_obj: Request) -> None:
     """Middleware function to authenticate a request."""
     auth_header = request_obj.headers.get('Authorization')
 
